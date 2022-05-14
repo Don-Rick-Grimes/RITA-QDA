@@ -1,0 +1,29 @@
+<!--{% load i18n %}-->
+
+<link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+
+<div class="nav-side-menu">
+
+  <h3 class="tittleTab">Otras imágenes de <br><span style="color:#49afcd;">{{ project.name }}</span></h3>
+
+  <div class="menu-list">
+          <ul>
+          {% for doc in project.images.all %}
+            <li  data-toggle="collapse" data-target="#collapse{{doc.id}}" class="collapsed">
+                  <a href="#"><i class="fa fa-book fa-lg"></i> {{ doc.name }}</a>
+            </li>
+            <ul class="sub-menu collapse" id="collapse{{doc.id}}">
+                    {% if doc.comment %}
+                      {{ doc.comment|linebreaks }}
+                    {% else %}
+                      {% trans "La imagen no tiene descripción." %}
+                    {% endif %}
+                    <a class="btn btn-small btn-block btn-primary pull-right left-group-button menu-document-button" href="/project/{{project.id}}/images/{{doc.id}}"><i class="icon-eye-open icon-white"></i>  Ver</a>
+            </ul>
+          {% endfor %}
+          </ul>
+          <div class="buttonContainer">
+            <a class="btn btn-small btn-success pull-right newDocument" href="/project/{{project.id}}/images/add" target="_blank"><i class="icon-file icon-white"></i> Agregar imagen</a>
+          </div>
+     </div>
+</div>

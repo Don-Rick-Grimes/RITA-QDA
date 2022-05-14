@@ -1,0 +1,389 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block head %}
+  {{ block.super }}
+  <!-- Annotator lib -->
+  <link href="{{ STATIC_URL }}css/annotator.min.css" rel="stylesheet" type="text/css">
+    <!-- Original, min
+  <script src="{{ STATIC_URL }}lib/annotator/annotator-full.min.js" type="text/javascript"></script>
+    -->  
+    <!-- Annotator lib and Store plugin (custom changes) -->
+  <script src="{{ STATIC_URL }}lib/annotator/annotator-1.2.6.js" type="text/javascript"></script>
+  <script src="{{ STATIC_URL }}lib/annotator/annotator.store-1.2.6.js" type="text/javascript"></script>
+  
+  <!-- JQuery contextMenu lib -->
+  <link href="{{ STATIC_URL }}lib/jquery.contextMenu/jquery.contextMenu.css" rel="stylesheet" type="text/css">
+  <script src="{{ STATIC_URL }}lib/jquery.contextMenu/jquery.contextMenu.js" type="text/javascript"></script>
+  <script src="{{ STATIC_URL }}lib/jquery.contextMenu/jquery.ui.position.js" type="text/javascript"></script>
+  <script src="{{ STATIC_URL }}lib/collisioncheck/jquery.collisioncheck-1.1.min.js" type="text/javascript"></script>
+{% endblock head %}
+
+{% block topbar_extra %}
+{% endblock topbar_extra %}
+
+{% block body %}
+  <div class="modal hide fade" id="codesModal">
+  </div>
+  <div class="modal hide fade" id="citationsModal">
+  </div>
+
+  <div id="documents-menu" class="menu left">
+    {% include "view_document_documents_tab.html" %}
+  </div>
+
+  <div class="row-fluid">
+    <div class="span10 offset1">
+      <div class="toolbar move-up">
+        <a class="btn left-group-button pull-right" target="_blank" href="{% url browse_categories pid=project.id %}"><i class="icon-tags"></i> {% trans "Categorías" %}</a>
+        <!-- <a class="btn left-group-button pull-right disabled"><i class="icon-file"></i> {% trans "Informes" %}</a> -->
+        <a class="btn left-group-button pull-right" target="_blank" href="{% url browse_queries pid=project.id %}"><i class="icon-search"></i> {% trans "Consultas" %}</a>
+        <!-- <a class="btn left-group-button pull-right disabled"><i class="icon-filter"></i> {% trans "Filtros" %}</a> -->
+        <!--<a class="btn left-group-button pull-right" target="_blank" href="{% url browse_annotations pid=project.id %}"><i class="icon-comment"></i> {% trans "Anotaciones" %}</a>-->
+        <a class="btn left-group-button pull-right codes" data-url="{% url browse_codes_from_document pid=project.id %}"><i class="icon-book"></i> {% trans "Códigos" %}</a>
+        <a class="btn left-group-button pull-right citations" data-url="{% url browse_document_citations pid=project.id did=document.id %}"><i class="icon-bookmark"></i> {% trans "Citas" %}</a>
+        <a class="btn left-group-button pull-right" href="/project/{{project.id}}"><i class="icon-circle-arrow-left"></i> {% trans "Regresar al proyecto" %}</a>
+      </div>
+    </div>
+  </div>
+  
+  <div class="document-container white-background with-border row-fluid">
+    <div class="span9 document-text">
+      <h3>{{ document.name }}</h3>
+      <div id="doc-text-area">
+      {% autoescape off %}
+        {{ document.document.text|linebreaks }}
+      {% endautoescape %}
+      </div>
+    </div>
+    <div class="span3 document-citations">
+      {% for cit in citations %}
+      <div id="bar-id-{{ cit.id }}" class="citation-bar cit-{{ cit.html_color }}" title="{{ cit.codes_str }}" data-cid="{{ cit.id }}"></div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    //Obtener la ruta y cambiar los links de las imágenes para evitar cargarlas
+    ruta = "{{document.document.file}}";
+      n = ruta.search("/documents/")+11;
+      ruta = ruta.substring(n);
+      n = ruta.search("/");
+      ruta = '/static/documents/'+ruta.substring(0,n)+"/";
+      $(function() {
+          jQuery('img').each(function () {
+              jQuery(this).attr('src', ruta+jQuery(this).attr('src'));
+          });
+      });
+
+    // ** Right side bar **
+    // ******************
+    
+    function positionCitationBar(bar, citation) {
+      var total_height = 0;
+      if (citation.length > 1) {
+        var firstH = $(citation[0]).offset().top;
+        var lastH = $(citation[citation.length - 1]).offset().top;
+        total_height = lastH - firstH + $(citation[citation.length - 1]).height();
+      } else {
+        total_height = citation.height();
+      }
+      
+      bar.position({
+        my: "center top",
+        at: "center top",
+        of: citation,
+        collision: 'none'
+      });
+      
+      bar.css("left", "");
+      bar.height(total_height);
+      
+      // Check for collisions
+      var bar_separation = 15;
+      while (bar.collidesWith('.citation-bar').length > 0) {
+        bar.css("left", bar_separation);
+        bar_separation += 15;
+      }
+    }
+        
+    function createCitationBar(citation, cid) {
+      if (cid == null) {
+        var citation_id = citation.attr('name').match(/\d+$/)[0];
+      } else {
+        if (citation.attr("name") == 'cit-id-NaN') {
+          // We assign the correct name for newly created citations
+          citation.attr("name", Annotator.prototype.citationIdStr + cid);
+        }
+        var citation_id = cid;
+      }
+      
+      var new_bar = $('<span/>', {
+        'id': 'bar-id-' + citation_id,
+        'class': 'citation-bar'
+      });
+      
+      $('.document-citations').append(new_bar);
+      new_bar.data("cid", citation_id);
+      positionCitationBar(new_bar, citation);
+    }
+    
+    function positionAllBars () {
+      $( ".citation-bar" ).each(function( index ) {
+        var citation_id_str = Annotator.prototype.citationIdStr;
+        var selector_name = '*[name="' + citation_id_str + $(this).data('cid') + '"]';
+        positionCitationBar($(this), $(selector_name));            
+        
+        // Display tooltips
+        if ($(this).attr('title') !== undefined) {
+            var code_list = $(this).attr('title').split(", ");
+        } else {
+            var code_list = $(this).attr('data-original-title').split("<br>");
+        }
+        $(this).tooltip({
+            html: true,
+            placement: 'right',
+            delay: 0,
+            animation: false,
+            trigger: 'manual'
+        });
+        $(this).attr('title', code_list.join('<br>'))
+               .tooltip('fixTitle').tooltip('show');
+      });
+
+      // Adjust tooltip styles.
+      $( '.tooltip' ).each(function( idx, value ) {
+        var current_style = $(value).attr('style');
+        $(value).attr( 'style', 'padding-top: 0px;' + current_style );
+      });
+      if(url.search("#")>0){
+            cadena=url.substring(url.search("#")+1);
+            console.log(cadena);
+            buscarCita(cadena);
+          }
+    }
+    
+    $(window).resize(function() {
+      positionAllBars();
+    });
+    
+    $(document).ready(function() {
+        $('.codes').click(function(ev) {
+          ev.preventDefault(); // prevent navigation
+          var url = $(this).data("url"); // get the form url
+          $.getJSON(url, function(data) { // load the url into the modal
+            $('#codesModal').html(data.html);
+            $("#codesModal").modal('show');
+          });
+          return false; // prevent the click propagation
+        });
+        $('.citations').click(function(ev) {
+          ev.preventDefault(); // prevent navigation
+          var url = $(this).data("url"); // get the form url
+          $.getJSON(url, function(data) { // load the url into the modal
+            $('#citationsModal').html(data.html);
+            $("#citationsModal").modal('show');
+          });
+          return false; // prevent the click propagation
+        });
+        $('#formulario').submit(function(ev) {
+          alert("asfd");
+          ev.preventDefault(); // prevent navigation
+          alert("asfd");
+          var url = $(this).data("url"); // get the form url
+          $.getJSON(url, function(data) { // load the url into the modal
+            $('#citationsModal').html(data.html);
+            $("#citationsModal").modal('show');
+          });
+          return false; // prevent the click propagation
+        });
+
+        function busqueda(ev){
+          
+        }
+        // ** Intials **
+        // ******************
+        setTimeout(function() {
+          $('#documents-menu').css('left','-430px');
+        }, 250);
+        
+        setTimeout(function() {
+          positionAllBars();
+          Annotator.prototype.hideAllAnnotations();
+        }, 1200);
+        
+        // ** Context menu for each code bar **
+        $.contextMenu({
+          selector: '.document-citations .citation-bar',
+          callback: function(key, options) {
+            // Empty global callback 
+          },
+          items: {
+            "addCode": {
+              name: "{{ texts.add_code }}",
+              icon: "edit",
+              callback: function(key, options) {
+                var cit_id = $(this).data('cid');
+                var url = '{% url add_code_to_citation pid=project.id cid="CIT_ID" %}'.replace('CIT_ID', cit_id);//TODO: mejorar
+                $.getJSON(url, function(data) {
+                  $('#codeModal').html(data.html);
+                  $('#codeModal').modal('show');
+                });
+              },
+            },
+            "addAnnotation": {
+              name: "{{ texts.add_annotation }}",
+              icon: "paste",
+              callback: function(key, options) {
+                var cit_id = $(this).data('cid');
+                var url = '{% url add_annotation_to_citation pid=project.id cid="CIT_ID" %}'.replace('CIT_ID', cit_id);//TODO: mejorar
+                $.getJSON(url, function(data) {
+                  $('#codeModal').html(data.html);
+                  $('#codeModal').modal('show');
+                });
+              },
+            },
+            "viewCodes": {
+              name: "{{ texts.view_details }}",
+              icon: "copy",
+              callback: function(key, options) {
+                var cit_id = $(this).data('cid');
+                var url = '{% url citation_details pid=project.id cid="CIT_ID" %}'.replace('CIT_ID', cit_id);//TODO: mejorar
+                $.getJSON(url, function(data) {
+                  $('#citationModal').html(data.html);
+                  $('#citationModal').modal('show');
+                });
+              },
+            },
+          }
+        });
+          
+        // ** Annotations click and fade events **
+        $('.document-citations').on('click', '.citation-bar', function() {
+          citation_id = $(this).data('cid');
+          Annotator.prototype.hideAllAnnotations();
+          Annotator.prototype.showAnnotation(citation_id, true);
+        });
+        $('.document-citations').on('mouseenter', '.citation-bar', function() {
+          citation_id = $(this).data('cid');
+          Annotator.prototype.showAnnotation(citation_id);
+        });
+        $('.document-citations').on('mouseleave', '.citation-bar', function() {
+          citation_id = $(this).data('cid');
+          Annotator.prototype.hideAnnotation(citation_id);
+        });
+        
+        // ** Modal on submit **
+        // ******************        
+        $('#codeModal').on('submit', 'form', function() {
+          $.ajax({ 
+            type: $(this).attr('method'), 
+            url: this.action, 
+            data: $(this).serialize(),
+            context: this,
+            success: function(data, status) {
+              if (data.success) {
+                var selector = '#' + 'bar-id-' + data.cid;
+                $(selector).attr('title', data.codes_str);
+                $("#bar-id-"+data.cid).attr('data-original-title', data.codes_str);
+                positionAllBars();
+                $('#codeModal').modal('hide');
+              } else {
+                $('#codeModal').html(data.html);
+              }
+            }
+          });
+          return false;
+        });
+        
+        // ** Annotator lib initialization **
+        // ******************
+        Annotator.Plugin.LibreQDA = function (element) {
+          return {
+            pluginInit: function () {
+              this.annotator
+                .subscribe("annotationSaved", function (annotation) {
+                  citation_id_str = Annotator.prototype.citationIdStr;
+                  var selector_name = '*[name="' + citation_id_str + annotation.id + '"]';
+                  var selector_nan = '*[name="' + citation_id_str + 'NaN"]';
+                  createCitationBar($(selector_name + ',' + selector_nan), annotation.id);
+                  Annotator.prototype.hideAllAnnotations();
+                  Annotator.prototype.showAnnotation(annotation.id, true);
+                })
+                .subscribe("annotationsLoadedFromStore", function () {
+                  // ** Hide Annotations **
+                  Annotator.prototype.hideAllAnnotations();
+          
+                  // Position bars
+                  $(".citation-bar").each(function() {
+                    citation_id_str = Annotator.prototype.citationIdStr;
+                    var selector_name = '*[name="' + citation_id_str + $(this).data('cid') + '"]';
+                    positionCitationBar($(this), $(selector_name));
+                  });
+                })
+                .subscribe("annotationDeleted", function (annotation) {
+                  var selector = '#' + 'bar-id-' + annotation.id;
+                  $(selector).remove();
+                  Annotator.prototype.hideAllAnnotations();
+                  positionAllBars();
+                });
+              }
+          }
+        };
+        
+        $('#doc-text-area').annotator()
+          .annotator('addPlugin', 'LibreQDA')
+          .annotator('addPlugin', 'Store', {
+            prefix: '',
+            urls: {
+              create:  '{% url annotations_create pid=project.id did=document.id %}',
+              read:    '{% url annotations_read pid=project.id did=document.id %}:id',
+              update:  '{% url annotations_update pid=project.id did=document.id %}:id',
+              destroy: '{% url annotations_destroy pid=project.id did=document.id %}:id',
+              search:  '/search/'
+            },
+            annotationData: {
+              // Extra parameters
+            },
+          });
+
+    });
+
+  url=window.location.href;
+
+  // búsqueda por párrafo
+  // function buscarCita(cadena){
+  //     jQuery('div .annotator-wrapper p').each(function () {
+  //       var n=jQuery(this).text().search(cadena);
+  //       if(n>=0){
+  //         nombre = jQuery(this).children("span").attr('name');//se obtiene el atributo name del span
+  //         pos = nombre.search("-");//se buscar la posición del guión
+  //         nombre = nombre.substring(pos);//se extrae la parte después del guion
+  //         id="bar"+nombre;//se concatena bar con 'nombre' para obtener el id
+  //         //console.log(id);
+  //         var container = $('div');
+  //         barra = $('#'+id);
+  //         //container.scrollTop(scrollTo.offset().top - container.offset().top + container.scrollTop());
+  //         container.scrollTop(barra.offset().top-300);
+  //         console.log(barra.offset().top);
+  //       }
+  //     });
+  //   };
+
+    function buscarCita(cadena){
+      jQuery('div .annotator-wrapper div').each(function () {
+        n=jQuery(this).text().search(cadena);
+        if(n>=0){
+          nombre = jQuery(this).attr('id');//se obtiene el atributo name del span
+          container = $('div');
+          barra = $('#'+nombre);
+          container.scrollTop(0);
+          container.scrollTop(barra.offset().top-100);
+          //console.log(barra.offset().top);
+        }
+      });
+    };
+
+
+  </script>
+{% endblock %}

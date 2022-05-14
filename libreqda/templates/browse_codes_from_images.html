@@ -1,0 +1,77 @@
+{% load i18n %}
+{% load filters %}
+
+{% block body %}
+<div class="modal-header">
+  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+  <h3 id="myModalLabel">Códigos del proyecto</h3>
+</div>
+  <div class="row-fluid modal-body">
+    <div class="span10 offset1">
+      <div class="toolbar">
+        <a class="btn btn-success pull-right" target="_blank" href="{% url new_code pid=project.id %}"><i class="icon-book icon-white"></i>  {% trans "Agregar código" %}</a>
+      </div>
+      <div class="white-background with-border lone-container">
+        {% if project.codes.all %}
+          <table class="table table-condensed table-striped table-hover">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>{% trans "Etiqueta" %}</th>
+                <th>{% trans "Citas" %}</th>
+                <th>{% trans "Códigos" %}</th>
+                <th>{% trans "Padre" %}</th>
+                <th>{% trans "Peso" %}</th>
+                <th>{% trans "Añadido por" %}</th>
+                <th>{% trans "Fecha" %}</th>
+                <th></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for code in project.codes.all %}
+                <tr>
+                  <td>{{ forloop.counter}}</td>
+                  <td>{{ code|pretty_print_code_name|safe }}</td>
+                  <td><a href="{% url browse_code_image_citations pid=project.id cid=code.id %}">{{ code.image_citations.count }}</a></td>
+                  <td>TODO</td>
+                  <td>
+                    {% if code.parent_codes.all %}
+                      {% for parent in code.parent_codes.all %}
+                        {% if forloop.last %}
+                          {{ parent|pretty_print_code_name|safe }}
+                        {% else %}
+                          {{ parent|pretty_print_code_name|safe }} 
+                        {% endif %}
+                      {% endfor %}
+                    {% else %}
+                      -
+                    {% endif %}
+                  </td>
+                  <td>{{ code.weight }}</td>
+                  <td>{{ code.created_by }}</td>
+                  <td>{{ code.creation_date }}</td>
+                  <td><a class="btn btn-small btn-primary pull-right" target="_blank" href="{% url edit_code pid=project.id cid=code.id %}"><i class="icon-edit icon-white"></i>  {% trans "Modificar" %}</a></td>
+                  <!--<td><a class="btn btn-small btn-danger pull-right" onclick="eliminarCodigo('{{code}}','{% url delete_code pid=project.id cid=code.id %}')"><i class="icon-trash icon-white"></i>  {% trans "Eliminar" %}</a></td>-->
+                </tr>
+                <tr>
+                  {% if code.comment %}
+                    <td colspan="9">{{ code.comment }}</td>
+                  {% else %}
+                    <td colspan="9">{% trans "El código no tiene descripción." %}</td>
+                  {% endif %}
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="alert alert-info">
+            <h4>{% trans "¡No hay códigos!" %}</h4>
+            <p>{% trans "No hay códigos para el proyecto. Puede " %}<strong><a href="{% url new_code pid=project.id %}">{% trans "agregar uno" %}</a></strong>.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+    <script src="{{ STATIC_URL }}js/codigos.js" type="text/javascript"></script>
+{% endblock %}

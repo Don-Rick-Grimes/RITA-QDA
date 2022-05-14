@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block head %}
+  {{ block.super }}
+{% endblock head %}
+
+{% block topbar_extra %}
+{% endblock topbar_extra %}
+
+{% load filters %}
+
+{% block body %}
+  <div class="modal hide fade" id="userModal">
+  </div>
+
+  <div class="row-fluid viewProjects">
+
+    <div class="span3 offset1 containerProjects">
+
+      <h3 class="tittle">PROYECTOS</h3>
+      <hr></hr>
+
+      {% if allProjects %}
+        <div class="accordion white-background" id="accordion">
+          {% for project in allProjects %}
+            <div class="accordion-group">
+              <div class="accordion-heading">
+                <a class="accordion-toggle acordion-project-name" data-parent="#accordion" href="/project/{{project.id}}">
+                  {{ project.name}}
+                </a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="alert alert-info">
+          <h4>¡No hay proyectos!</h4>
+          <p>No hay proyectos asignados a este usuario. Puede <strong><a href="/project/new">agregar uno</a></strong>.</p>
+        </div>
+      {% endif %}
+
+      <div class="toolbar">
+        <a class="btn btn-success pull-right" href="/project/new"><i class="icon-plus icon-white"></i> Nuevo proyecto</a>
+      </div>
+    </div>
+
+    <div class="span7 detailProject">
+      {% if projects %}
+        <div class="accordion white-background" id="accordions">
+          {% for project in projects %}
+            <div class="accordion-group">
+              <div class="accordion-heading">
+                <a class="accordion-toggle acordion-project-name" data-toggle="collapse" data-parent="#accordions" href="#collapse{{project.id}}">
+                  {{ project.name}}
+                </a>
+                <a class="btn btn-small btn-info pull-right left-group-button" href="/project/{{project.id}}/copy"><i class="icon-repeat icon-white"></i>  Duplicar</a>
+                <a class="btn btn-small btn-danger pull-right left-group-button" onclick="eliminarProyecto()" ><i class="icon-trash icon-white"></i>  Eliminar</a>
+              </div>
+              <div id="collapse{{project.id}}" class="accordion-body in collapse">
+                <div class="accordion-inner">
+                  <div class="toolbar-small">
+                    <a class="btn btn-small left-group-button" href="{% url browse_project_citations pid=project.id %}"><i class="icon-bookmark"></i> {% trans "Citas" %}</a>
+                    <a class="btn btn-small left-group-button codes" href="{% url browse_codes pid=project.id %}"><i class="icon-book"></i> {% trans "Códigos" %}</a>
+                    <!--<a class="btn btn-small left-group-button" href="{% url browse_annotations pid=project.id %}"><i class="icon-comment"></i> {% trans "Anotaciones" %}</a>-->
+                    <!-- <a class="btn btn-small left-group-button"><i class="icon-filter"></i> {% trans "Filtros" %}</a> -->
+                    <a class="btn btn-small left-group-button" href="{% url browse_queries pid=project.id %}"><i class="icon-search"></i> {% trans "Consultas" %}</a>
+                    <!-- <a class="btn btn-small left-group-button"><i class="icon-file"></i> {% trans "Informes" %}</a> -->
+                    <a class="btn btn-small left-group-button" href="{% url browse_categories pid=project.id %}"><i class="icon-tags"></i> {% trans "Categorías" %}</a>
+
+                    
+                  </div>
+                  <ul class="nav nav-tabs">
+                    <li class="active"><a href="#general{{project.id}}-tab" data-toggle="tab">General</a></li>
+                    <li><a href="#documents{{project.id}}-tab" data-toggle="tab">Documentos</a></li>
+                    <li><a href="#images{{project.id}}-tab" data-toggle="tab">Imágenes</a></li>
+                    <li><a href="#users{{project.id}}-tab" data-toggle="tab">Usuarios</a></li>
+                  </ul>
+                  <div class="tab-content">
+                    <div class="tab-pane tight-tab-content active" id="general{{project.id}}-tab">
+                      {% include "browse_projects_general_tab.html" %}
+                    </div>
+                    <div class="tab-pane tight-tab-content" id="documents{{project.id}}-tab">
+                      {% include "browse_projects_documents_tab.html" %}
+                    </div>
+                    <div class="tab-pane tight-tab-content" id="images{{project.id}}-tab">
+                      {% include "browse_projects_images_tab.html" %}
+                    </div>
+                    <div class="tab-pane tight-tab-content" id="users{{project.id}}-tab">
+                      {% include "browse_projects_users_tab.html" %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="alert alert-info">
+          <h4>¡No hay proyectos!</h4>
+          <p>No hay proyectos asignados a este usuario. Puede <strong><a href="/project/new">agregar uno</a></strong>.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+  <script src="{{ STATIC_URL }}js/browse_projects.js" type="text/javascript"></script>
+{% endblock %}

@@ -1,0 +1,142 @@
+Metadata-Version: 1.1
+Name: image_slicer
+Version: 0.1.1
+Summary: Cut images into tiles and reassemble them..
+Home-page: http://samdobson.github.io/image_slicer
+Author: Sam Dobson
+Author-email: sjd333@gmail.com
+License: Copyright (c) 2013 Sam Dobson
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+
+Description: .. image:: https://badge.fury.io/py/image_slicer.png
+            :target: http://badge.fury.io/py/image_slicer
+        
+        .. image:: https://secure.travis-ci.org/samdobson/image_slicer.png
+            :target: http://travis-ci.org/samdobson/image_slicer
+        
+        .. image:: https://coveralls.io/repos/samdobson/image_slicer/badge.png
+            :target: https://coveralls.io/r/samdobson/image_slicer
+        
+        documentation_ | website_
+        
+        
+        Image Slicer
+        ============
+        
+        What does it do?
+        ----------------
+        
+        Splits an image into ``n`` equally-sized tiles. Also capable of joining the pieces back together.
+        
+        Whether you are planning a collaborative art project, creating a jigsaw puzzle, or simply get a kick out of dividing images into identical quadrilaterals... this package is for you!
+        
+        Installation
+        ------------
+        
+        .. code-block:: bash
+        
+        	$ pip install image_slicer
+        
+        *Python versions supported:*
+        
+        * 2.6+
+        * 3.2+
+        
+        Usage
+        -----
+        
+        Slice an image with Python:
+        
+        .. code-block:: python
+        
+        	>>> import image_slicer
+        	>>> image_slicer.split_image('cake.jpg', 4)
+        	(<Tile #1 - cake_01_01.png>, <Tile #2 - cake_01_02.png>, <Tile #3 - cake_02_01.png>, <Tile #4 - cake_02_02.png>)
+        
+        
+        ... or from the command line:
+        
+        .. code-block:: bash
+        
+        	$ slice-image cake.jpg 36
+        
+        `Further examples`_ can be found in the documentation_.
+        
+        Used by
+        -------
+        
+        * split-image.net
+        * puzzle-shifter.net
+        * reveal-image.net
+        * collab-art.net
+        
+        About
+        -----
+        
+        This module was developed for collabart_, a web application to help you launch a collaborative art project.
+        
+        .. _Further examples: https://image-slicer.readthedocs.org/en/latest/examples/
+        .. _documentation: https://image-slicer.readthedocs.org/en/latest/
+        .. _website: http://samdobson.github.io/image_slicer
+        .. _collabart: http://www.collabart.com
+        
+        
+        
+        0.1.1 (15/08/2013)
+        -------------------
+        
+        * Fix ``slice-image`` script.
+        * Rename ``join_tiles()`` to ``join()``.
+        
+        0.1.0 (12/08/2013)
+        -------------------
+        
+        * New ``Tile`` class.
+        * ``split_image()`` now saves tiles by default.
+        * ``get_basename()`` can now handle paths.
+        * More comprehensive validation in ``validate_image()``.
+        * Fix incorrect filenames returned by ``save_tiles()``.
+        * Expand documentation.
+        * Improve test coverage.
+        
+        0.0.2 (07/23/2013)
+        ------------------
+        
+        * Fix dependencies in setup.py
+        
+        0.0.1 (07/19/2013)
+        ------------------
+        
+        * Initial release.
+        
+        
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Intended Audience :: Developers
+Classifier: Operating System :: OS Independent
+Classifier: Natural Language :: English
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 2.6
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.3

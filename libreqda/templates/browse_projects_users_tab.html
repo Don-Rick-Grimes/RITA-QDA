@@ -1,0 +1,79 @@
+{% load filters %}
+
+<script>
+$(document).ready(function() {
+  $('.addUser').click(function(ev) {
+    ev.preventDefault(); // prevent navigation
+    var url = $(this).data("url"); // get the form url
+    $.getJSON(url, function(data) { // load the url into the modal
+      $('#userModal').html(data.html);
+      $('#id_users').removeAttr('multiple');
+      $("#userModal").modal('show');
+      $('div.controls').append('<button type="submit" class="btn btn-link left-group-button"><i class="icon-plus-sign"></i> Agregar</button>');
+      $('div.controls').append('<br>Digite el nombre del usuario para aproximar la búsqueda');
+      $('div.modal-footer button[type="submit"]').hide();
+      $('div.modal-footer').append('<a href="" class="btn btn-primary" role="button"><i class="icon-refresh"></i> Finalizar</a>');
+    });
+    return false; // prevent the click propagation
+  });
+  $('#userModal').on('submit', 'form', function() {
+    $.ajax({ 
+      type: $(this).attr('method'), 
+      url: this.action, 
+      data: $(this).serialize(),
+      context: this,
+      success: function(data, status) {
+        $('div.controls').append('<br>Usuario <span style="color:blue">'+$('#id_users :selected').text()+'</span> ha sido agregado exitosamente.');
+        $('#id_users :selected').remove();
+        // if (data.redirect) {
+        //   window.location.replace(data.redirect);
+        // }
+        $('#userModal').html(data.html);
+      }
+    });
+    return false;
+  });
+});
+
+</script>
+
+
+<div class="toolbar-small">
+  {% if user in project.admin_users %}
+    <a data-url="{% url add_user_to_project pid=project.id %}" class="btn btn-small btn-success pull-right addUser"><i class="icon-user icon-white"></i> Agregar usuario</a>
+  {% endif %}
+</div>
+<table class="table table-condensed table-striped table-hover">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Nombre</th>
+      <th>Rol</th>
+      <th>Fecha</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td> - </td>
+        <td>{{ project.owner }}</td>
+        <td>Dueño</td>
+        <td>{{ project.creation_date }}</td>
+        <td></td>
+      </tr>
+    {% for user_perm in project.permissions.all %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ user_perm.user.username }}</td>
+        <td>{{ user_perm|get_permission_text }}</td>
+        <td>{{ user_perm.creation_date }}</td>        
+        <td>
+          {% if user in project.admin_users and user_perm.user != project.owner %}
+          <a class="btn btn-small btn-danger pull-right" onclick="eliminarUsuario('{{ user_perm.user.username }}','{% url remove_user_from_project pid=project.id uid=user_perm.user.id %}')"><i class="icon-trash icon-white"></i>  Eliminar</a>
+          {% endif %}
+        </td>
+        
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>

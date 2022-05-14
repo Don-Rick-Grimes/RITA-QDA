@@ -1,0 +1,480 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block head %}
+  {{ block.super }}
+  <!-- Annotorious lib -->
+  <link type="text/css" rel="stylesheet" href="{{ STATIC_URL }}annotorius/css/annotorious.css" />
+  <script type="text/javascript" src="{{ STATIC_URL }}annotorius/annotorious.min.js"></script>
+  <!-- JQuery contextMenu lib-->
+  <link href="{{ STATIC_URL }}lib/jquery.contextMenu/jquery.contextMenu.css" rel="stylesheet" type="text/css">
+  <script src="{{ STATIC_URL }}lib/jquery.contextMenu/jquery.contextMenu.js" type="text/javascript"></script>
+{% endblock head %}
+
+{% block topbar_extra %}
+{% endblock topbar_extra %}
+
+{% block body %}
+  <div class="modal hide fade" id="codeModal">
+  </div>
+  <div class="modal hide fade" id="citationModal">
+  </div>
+  <div class="modal hide fade" id="codesModal">
+  </div>
+  <div class="modal hide fade" id="citationsModal">
+  </div>
+
+  <div id="documents-menu" class="menu left" style="left:-430px">
+    {% include "view_image_images_tab.html" %}
+  </div>
+
+  <div class="row-fluid">
+    <div class="span10 offset1">
+      <div class="toolbar move-up">
+        <a class="btn left-group-button pull-right" target="_blank" href="{% url browse_categories pid=project.id %}"><i class="icon-tags"></i> {% trans "Categorías" %}</a>
+        <!-- <a class="btn left-group-button pull-right disabled"><i class="icon-file"></i> {% trans "Informes" %}</a> -->
+        <a class="btn left-group-button pull-right" target="_blank" href="{% url browse_queries pid=project.id %}"><i class="icon-search"></i> {% trans "Consultas" %}</a>
+        <!-- <a class="btn left-group-button pull-right disabled"><i class="icon-filter"></i> {% trans "Filtros" %}</a> -->
+        <!--<a class="btn left-group-button pull-right" target="_blank" href="{% url browse_annotations pid=project.id %}"><i class="icon-comment"></i> {% trans "Anotaciones" %}</a>-->
+        <a class="btn left-group-button pull-right codes" data-url="{% url browse_codes_from_images pid=project.id %}"><i class="icon-book"></i> {% trans "Códigos" %}</a>
+        <a class="btn left-group-button pull-right citations" data-url="{% url browse_image_citations pid=project.id did=image.id %}"><i class="icon-bookmark"></i> {% trans "Citas" %}</a>
+        <a class="btn left-group-button pull-right" href="/project/{{project.id}}"><i class="icon-circle-arrow-left"></i> {% trans "Regresar al proyecto" %}</a>
+      </div>
+    </div>
+  </div>
+  
+  <div class="document-container white-background with-border row-fluid">
+    <div class="span9 document-text">
+      <h3>{{ image.name }} </h3>
+      <div id="doc-text-area">
+        {% for cit in citations %}
+        <div id="bar-id-{{ cit.id }}" class="citation-bar cit-{{ cit.html_color }}" title="{{ cit.codes_str }}" data-cid="{{ cit.id }}" style="position:relative; z-index:-1; top:100px"></div>
+        {% endfor %}
+        <img src="/{{ image.image.file.url }}" alt="Error, la imagen no se muestra" class="annotatable"/>
+      </div>
+    </div>
+    <div id="coberturas" class="btn-group" style="display:none">
+      <button class="btn" disabled>Códigos sugeridos:</button>
+      <button class="btn dropdown-toggle" data-toggle="dropdown">
+        <span class="caret"></span>
+      </button>
+      <ul id="sugerencias" class="dropdown-menu">
+        <li><a id="arbol" href="#" data-name="Árboles"  class="selector">Árboles</a></li>
+        <li><a id="cesped" href="#" data-name="Césped"  class="selector">Césped</a></li>
+        <li><a id="suelo" href="#" data-name="Suelo descubierto" class="selector">Suelo descubierto</a></li>
+        <li><a id="agua" href="#" data-name="Cuerpos de agua" class="selector">Cuerpos de agua</a></li>
+      </ul>
+    </div>
+    <div id="similar" class="btn-group" style="display:none">
+      <a class="btn" href="{% url similar pid=project.id did=image.id %}?page=1">Buscar Imágenes Similares</a>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+  /* the following codes are responsible in adding, updating and deleting citations in a image using the Javascript
+  * API from annotorious
+  */
+
+  /* this function creates an annotation in the image */
+  var myVar;
+  function setAnnotation(){
+    $.ajax({
+      url:'{% url view_image pid=project.id did=image.id %}',
+      dataType:"json",
+      type:"POST",
+      data:{csrfmiddlewaretoken: csrftoken},
+      success: function(data) {
+        data.datos.forEach(function(element){
+          an = JSON.parse(element.serial);
+          an.id = element.id;
+          anno.addAnnotation(an);
+          barPosition(an);
+          barOffset();
+        });
+      }
+    });
+    clearInterval(myVar);
+  }
+  /* these functions load the annotations saved in the database in the image */
+  $(window).on("load", function() {
+    myVar = setInterval(function(){ loadAnnotation(); }, 300);
+  });
+  function loadAnnotation(){
+    $.ajax({
+      url:'{% url view_image pid=project.id did=image.id %}',
+      dataType:"json",
+      type:"POST",
+      data:{csrfmiddlewaretoken: csrftoken},
+      success: function(data) {
+        data.datos.forEach(function(element){
+          an = JSON.parse(element.serial);
+          an.id = element.id;
+          anno.addAnnotation(an);
+          barOffset();
+          barPosition(an);
+          positionTooltips(".citation-bar");
+        });
+      }
+    });
+    clearInterval(myVar);
+  }
+
+  /* this function create the csrftoken */
+  function getCookie(name) {
+    var cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = jQuery.trim(cookies[i]);
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+  }
+  var csrftoken = getCookie('csrftoken');
+
+  /* when the citation is created this function calls a post to send the data of the citation to a view for saving it
+  * in the database
+  */
+  anno.addHandler('onAnnotationCreated', function(annotation) {
+    anot = JSON.stringify(annotation);
+    $.ajax({
+      url:'{% url cit_image_add pid=project.id did=image.id %}',
+      dataType:"json",
+      type:"POST",
+      data:{csrfmiddlewaretoken: csrftoken, an:anot},
+      success: function(data) {
+        data.datos.forEach(function(element){
+          an = JSON.parse(element.serial);
+          an.id = element.id;
+          $('.annotorious-annotationlayer').before('<div id="bar-id-' + an.id + '" class="citation-bar" data-original-title="<br>"></div>');
+        });
+      }
+    });
+    anno.reset();
+    myVar = setInterval(function(){ setAnnotation(); }, 150);
+  });
+
+  /* when the citation is updated this function calls a post to send the data of the updated citation to a view for saving it
+  * in the database
+  */
+  anno.addHandler('onAnnotationUpdated', function(annotation){
+    anot = JSON.stringify(annotation);
+    $.post( '{% url cit_image_update pid=project.id did=image.id %}', { csrfmiddlewaretoken: csrftoken, 'an':anot});
+  });
+
+  /* when the citation is deleted this function calls a post to send the data of the citation to be deleted to a view to
+  * delete it from the database
+  */
+  anno.addHandler('onAnnotationRemoved', function(annotation){
+    anot = JSON.stringify(annotation);
+    $.post( '{% url cit_image_del pid=project.id did=image.id %}', { csrfmiddlewaretoken: csrftoken, 'an':anot}, function(data){
+      var selector = '#bar-id-' + annotation.id;
+      $(selector).tooltip('hide');
+      habilitarBotones(selector);
+      $(selector).remove();
+      $('.citation-bar').each(function(element){
+          var sel = '#' + $(this).attr('id');
+          if ($(this).attr('id').split('bar-id-')[1] < annotation.id){
+            var top = parseInt($(sel).css('top').split('px')[0])-5;
+            var newtop = top.toString()+"px";
+            $(sel).css('top',newtop);
+          }
+      });
+    });
+  });
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* the following functions are responsible for assigning, displaying and deleting label codes for citations */
+
+  anno.addHandler('onMouseOverItem', function(annotation){
+        $('.annotorious-item').contextMenu(false);
+        while (typeof $('.context-menu-list')[1] != 'undefined'){
+          $('.context-menu-list')[1].remove()
+        }
+  });
+  anno.addHandler('onMouseOverAnnotation', function(annotation){
+    if (typeof annotation.C != 'undefined'){
+      cid = annotation.C.id;
+      $('.annotorious-item').contextMenu(true);
+      $.contextMenu({
+        selector: '.annotorious-item',
+        callback: function(key, options) {
+        // Empty global callback
+        },
+        items: {
+            "addCode": {
+                  name: "{{ texts.add_code }}",
+                  icon: "edit",
+                  callback: function(key, options) {
+                      cit = cid;
+                      url = '{% url add_code_to_image_citation pid=project.id cid='CIT_ID' %}'.replace('CIT_ID', cit);
+                      $.getJSON(url, function(data) {
+                        $('#codeModal').html(data.html);
+                        $('#codeModal').modal('show');
+                      });
+                  },
+            },
+            "addAnnotation": {
+                  name: "{{ texts.add_annotation }}",
+                  icon: "paste",
+                  callback: function(key, options) {
+                  // Empty global callback
+                  },
+            },
+            "viewCodes": {
+                  name: "{{ texts.view_details }}",
+                  icon: "copy",
+                  callback: function(key, options) {
+                      cit = cid;
+                      url = '{% url image_citation_details pid=project.id cid="CIT_ID" %}'.replace('CIT_ID', cit);
+                      $.getJSON(url, function(data) {
+                        $('#codeModal').html(data.html);
+                        $('#codeModal').modal('show');
+                      });
+                  },
+            },
+        }
+      });
+    }
+  });
+
+  anno.addHandler('onMouseOutOfAnnotation', function(annotation){
+    $('.annotorious-item').contextMenu(false);
+    while (typeof $('.context-menu-list')[1] != 'undefined'){
+          $('.context-menu-list')[1].remove()
+    }
+  });
+
+  /* Modal on submit ** This function gets the JsonResponse after receiving POST from code form  */
+  $('#codeModal').on('submit', 'form', function() {
+      $.ajax({
+        type: $(this).attr('method'),
+        url: this.action,
+        data: $(this).serialize(),
+        context: this,
+        success: function(data, status) {
+          if (data.success) {
+              var selector = '#' + 'bar-id-' + data.cid;
+              barColor(data, selector);
+              $('#codeModal').modal('hide');
+              positionTooltips(selector);
+          }
+          else {
+            $('#codeModal').html(data.html);
+          }
+        }
+      });
+      return false;
+  });
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* the following functions create the bar color for label codes */
+
+  function barOffset(){
+      $('.citation-bar').each(function(element){
+          var selector = '#' + $(this).attr('id');
+          var top = parseInt($(selector).css('top').split('px')[0])+5;
+          var newtop = top.toString()+"px";
+          $(selector).css('top',newtop);
+      });
+  }
+
+  function barPosition(data){
+      var selector = '#' + 'bar-id-' + data.id;
+      var width = Math.round(data.shapes[0].geometry.width * $(".annotatable").width());
+      var top =   Math.round(data.shapes[0].geometry.y * $(".annotatable").height());
+      var left =  Math.round(data.shapes[0].geometry.x * $(".annotatable").width());
+      $(selector).attr('style', "position: relative; z-index:1; width:" + width + "px; top:" + top + "px; left:" + left +"px;")
+  }
+
+  function barColor(data,selector){
+      $(selector).attr('class', "citation-bar cit-" + data.codes_color)
+                 .attr('title', data.codes_str)
+                 .attr('data-original-title', data.codes_str);
+  }
+
+  function positionTooltips (selector) {
+      $(selector).each(function( index ) {
+          // Display tooltips
+          if ($(this).attr('title') != undefined) {
+              var code_list = $(this).attr('title').split(", ");
+          } else {
+              var code_list = $(this).attr('data-original-title').split("<br>");
+          }
+          $(this).tooltip({
+              html: true,
+              placement: 'right',
+              delay: 0,
+              animation: false,
+              trigger: 'manual'
+          });
+          $(this).attr('title', code_list.join('<br>'))
+                 .tooltip('fixTitle').tooltip('show');
+        });
+  }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* the following functions enable and display  the suggested coverage codes and also enable the similar image button */
+
+  var myAnnotation = {
+    src : '/{{image.image.file.url}}',
+    text : '',
+    shapes : [{
+      type : 'rect',
+      geometry : { x : 0, y: 0, width : 0.5, height: 0.5}
+    }]
+  }
+  /* this function enables the list of suggested coverage codes and displays citation on image
+  * when mouse is over list
+  */
+  $(document).ready(function() {
+    $.get('{% url sugerencia pid=project.id did=image.id %}', function(data){
+      if (data.success){
+        d = ((data.codigos.replace('[[', '[')).replace(']]', ']')).split('\n');
+        var codigo=[];
+        d.forEach(function(element,index){codigo[index]=JSON.parse(($.trim(element)).replace(new RegExp(" ", 'g'), ","));});
+        if (data.success){
+          $('#coberturas').show();
+          $('#similar').show();
+          var allAnnotations = [];
+          if (columnaCobertura(codigo, 0).length === 0)
+            $('#arbol').hide();
+          else {
+            var arbol = columnaCobertura(codigo, 0)[Math.floor(Math.random()*columnaCobertura(codigo, 0).length)];
+            $("#arbol").hover(function(){allAnnotations = mouseOverRecommendation(allAnnotations, arbol, data, 1, 'cobertura de árboles')},
+                              function(){mouseOutOfRecommendation(allAnnotations, data)});}
+          if (columnaCobertura(codigo, 1).length === 0)
+            $('#cesped').hide();
+          else {
+            var cesped = columnaCobertura(codigo, 1)[Math.floor(Math.random()*columnaCobertura(codigo, 1).length)];
+            $("#cesped").hover(function(){allAnnotations = mouseOverRecommendation(allAnnotations, cesped, data, 0.99, 'cobertura de césped')},
+                              function(){mouseOutOfRecommendation(allAnnotations, data)});}
+          if (columnaCobertura(codigo, 2).length === 0)
+            $('#suelo').hide();
+          else {
+            var suelo = columnaCobertura(codigo, 2)[Math.floor(Math.random()*columnaCobertura(codigo, 2).length)];
+            $("#suelo").hover(function(){allAnnotations = mouseOverRecommendation(allAnnotations, suelo, data, 0.99*0.99, 'cobertura de suelo descubierto')},
+                              function(){mouseOutOfRecommendation(allAnnotations, data)});}
+          if (columnaCobertura(codigo, 3).length === 0)
+            $('#agua').hide();
+          else {
+            var agua = columnaCobertura(codigo, 3)[Math.floor(Math.random()*columnaCobertura(codigo, 3).length)];
+            $("#agua").hover(function(){allAnnotations = mouseOverRecommendation(allAnnotations, agua, data, 0.99*0.99*0.99, 'cobertura de cuerpos de agua')},
+                              function(){mouseOutOfRecommendation(allAnnotations, data)});}
+        }
+      }
+    }, "json");
+    /* this function shows window of codes from code button */
+    $('.codes').click(function(ev) {
+      ev.preventDefault(); // prevent navigation
+      var url = $(this).data("url"); // get the form url
+      $.getJSON(url, function(data) { // load the url into the modal
+        $('#codesModal').html(data.html);
+        $("#codesModal").modal('show');
+      });
+      return false; // prevent the click propagation
+    });
+    /* this function shows window of citations from citation button */
+    $('.citations').click(function(ev) {
+      ev.preventDefault(); // prevent navigation
+      var url = $(this).data("url"); // get the form url
+      $.getJSON(url, function(data) { // load the url into the modal
+        $('#citationsModal').html(data.html);
+        $("#citationsModal").modal('show');
+      });
+      return false; // prevent the click propagation
+    });
+  });
+
+  /* if mouse's selector is over coverage option, it shows coverage location within the image and hide other citations */
+  function mouseOverRecommendation(allAnnotations, aleatorio, data, decre, texto){
+    myAnnotation.shapes[0].geometry.x = (aleatorio%data.x)/data.x;
+    myAnnotation.shapes[0].geometry.y = Math.trunc(aleatorio/data.x)/data.y;
+    myAnnotation.shapes[0].geometry.height = (1/data.y)*decre;
+    myAnnotation.shapes[0].geometry.width = (1/data.x)*decre;
+    myAnnotation.text = texto;
+    allAnnotations = anno.getAnnotations();
+    anno.removeAll();
+    anno.addAnnotation(myAnnotation);
+    return allAnnotations;
+  }
+
+  /* if mouse's selector is out of coverage option, it hides coverage location within the image and enable other citations */
+  function mouseOutOfRecommendation(allAnnotations, data){
+    anno.removeAnnotation(myAnnotation);
+    allAnnotations.forEach(function(annotation){anno.addAnnotation(annotation)});
+  }
+
+  /* line up coverages array into columns and return array of index where coverage exists  */
+  function columnaCobertura(codigo, i){
+    indiceCobertura =(codigo.map(function(value, index){return value[i];})).reduce(
+    function(a,element,index){
+      if(element===1)
+        a.push(index);
+      return a;
+    }, []);
+    return indiceCobertura
+  }
+
+  /*hide coverage option from list if coverage code is already being used in image*/
+  $('#coberturas').click(function(){
+    $('.citation-bar').each(function(index,element){
+      id = '#' + $(this).attr('id');
+      if($(id).attr('data-original-title') == $('#arbol').attr('data-name'))
+        $('#arbol').hide();
+      if($(id).attr('data-original-title') == $('#cesped').attr('data-name'))
+        $('#cesped').hide();
+      if($(id).attr('data-original-title') == $('#suelo').attr('data-name'))
+        $('#suelo').hide();
+      if($(id).attr('data-original-title') == $('#agua').attr('data-name'))
+        $('#agua').hide();
+    });
+  });
+
+  /*enable coverage option from list if coverage code is not being used in image*/
+  function habilitarBotones(selector){
+    id = selector;
+    if($(id).attr('data-original-title') == $('#arbol').attr('data-name'))
+      $('#arbol').show();
+    if($(id).attr('data-original-title') == $('#cesped').attr('data-name'))
+      $('#cesped').show();
+    if($(id).attr('data-original-title') == $('#suelo').attr('data-name'))
+      $('#suelo').show();
+    if($(id).attr('data-original-title') == $('#agua').attr('data-name'))
+      $('#agua').show();
+  }
+
+  /* add citation and label coverage code after make click in the list options */
+  var cid = 0;
+  $('.selector').click(function(){
+    selector = $(this).attr('id');
+    name = $(this).attr('data-name');
+    annotation = anno.getAnnotations()[0];
+    $.post('{% url cit_image_add pid=project.id did=image.id %}', {csrfmiddlewaretoken: csrftoken, 'an': JSON.stringify(annotation)},
+    function(data) {
+      an = JSON.parse(data.datos[0].serial);
+      an.id = data.datos[0].id;
+      cid = data.datos[0].id;
+      $('.annotorious-annotationlayer').before('<div id="bar-id-' + an.id + '" class="citation-bar" data-original-title></div>');
+      anno.addAnnotation(an);
+      barPosition(an);
+      barOffset();
+      $.post('{%url sugerencia pid=project.id did=image.id%}', {csrfmiddlewaretoken: csrftoken, 'selector': selector, 'name': name, 'cid': cid},
+      function(data){
+        var select = '#' + 'bar-id-' + data.cid;
+        barColor(data, select);
+        positionTooltips(select);
+      }, "json");
+    }, "json");
+    $(this).hide();
+  });
+
+  </script>
+{% endblock %}
+
+

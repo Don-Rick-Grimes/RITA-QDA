@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block head %}
+  {{ block.super }}
+{% endblock head %}
+
+{% block topbar_extra %}
+{% endblock topbar_extra %}
+
+{% block body %}
+  <div class="row-fluid">
+    <div class="span10 offset1">
+      {% include "form.html" with form=form form_action=form_action back_url=back_url %}
+    </div>
+  </div>
+  <td>
+    {% if category.codes.all %}
+      {% for codigo in category.codes.all %}
+        {% if forloop.last %}
+          <script type="text/javascript">
+            $("#id_codes option[value={{ codigo.id|safe }}]").prop("selected", true);
+          </script>
+        {% else %}
+          <script type="text/javascript">
+            $("#id_codes option[value={{ codigo.id|safe }}]").prop("selected", true);
+          </script>
+        {% endif %}
+      {% endfor %}
+    {% else %}
+    -
+    {% endif %}
+  </td>
+<script type="text/javascript">
+  	url=window.location.href;
+  	if(url.search("edit")>0){
+  		$("#id_name").val("{{category.name}}");
+  		$("#id_color").val("{{category.color}}");
+  		$("#id_comment").val("{{category.comment}}");
+  	}
+  </script>
+{% endblock %}

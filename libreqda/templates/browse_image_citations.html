@@ -1,0 +1,42 @@
+{% load i18n %}
+{% load filters %}
+
+{% block body %}
+  <div class="row-fluid">
+    <div class="span10 offset1">
+      <div class="modal-header">
+      <h3>Citas de la imagen</h3>
+      </div>
+      <div class="white-background with-border lone-container modal-body">
+        {% if citas.all %}
+          <table class="table table-condensed table-striped table-hover">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>{% trans "Fecha Creación" %}</th>
+                <th>{% trans "Comentario" %}</th>
+                <!--<th>{% trans "Ir" %}</th>-->
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for cita in citas.all %}
+              <tr>
+                  <td>{{ forloop.counter}}</td>
+                  <td>{{ cita.creation_date}}</td>
+                  <td>{{ cita.comment}}</td>
+                  <!--<td><a class="btn btn-small btn-block btn-primary pull-right left-group-button menu-document-button" onclick="$('#citationsModal').modal('hide');buscarCita('{{cita.comment}}');"><i class="icon-arrow-right icon-white"></i>  Ver</a></td>-->
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="alert alert-info">
+            <h4>{% trans "¡No hay citas!" %}</h4>
+            <p>{% trans "No hay citas en las imágenes. " %}<strong></strong>.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

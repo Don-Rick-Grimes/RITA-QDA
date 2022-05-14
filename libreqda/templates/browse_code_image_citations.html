@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+{% load filters %}
+
+{% block head %}
+  {{ block.super }}
+{% endblock head %}
+
+{% block topbar_extra %}
+{% endblock topbar_extra %}
+
+{% block body %}
+  <div class="row-fluid">
+    <div class="span10 offset1">
+      <div class="toolbar">
+      <h3>Citas del código <span style="color:#04B480;">{{ code.name}}</span></h3>
+      </div>
+      <div class="white-background with-border lone-container">
+        {% if citas.all %}
+          <table class="table table-condensed table-striped table-hover">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>{% trans "Imagen" %}</th>
+                <th>{% trans "Fecha Creación" %}</th>
+                <th>{% trans "Comentario" %}</th>
+                <th>{% trans "Ir" %}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for cita in citas.all %}
+              <tr>
+                  <td>{{ forloop.counter}}</td>
+                  <td>{{ cita.image.name}}</td>
+                  <td>{{ cita.creation_date}}</td>
+                  <td>{{ cita.comment}}</td>
+                  <td><a class="btn btn-small btn-block btn-primary pull-right left-group-button menu-document-button" href="/project/{{pid}}/images/{{cita.image.id}}/"><i class="icon-arrow-right icon-white"></i>  Ver</a></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="alert alert-info">
+            <h4>{% trans "¡No hay citas!" %}</h4>
+            <p>{% trans "No hay citas en las imágenes. " %}<strong></strong>.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

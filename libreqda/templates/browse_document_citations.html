@@ -1,0 +1,49 @@
+{% load i18n %}
+{% load filters %}
+
+{% block body %}
+  <div class="row-fluid">
+    <div class="span10 offset1">
+      <div class="modal-header">
+      <h3>Citas del documento</h3>
+      </div>
+      <div class="white-background with-border lone-container modal-body">
+      <!--<form enctype="multipart/form-data" id="formulario" action="{{form_action}}" method="post" class="form-horizontal">
+          {%csrf_token%}
+          <input id="busqueda" type="text" name="busqueda" maxlength="250">
+          <button type="submit" class="btn btn-primary left-group-button"><i class="icon-search"></i> Buscar</button>
+        </form>-->
+        {% if citas.all %}
+          <table class="table table-condensed table-striped table-hover">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>{% trans "Fecha Creación" %}</th>
+                <th>{% trans "Comentario" %}</th>
+                <th>{% trans "Texto" %}</th>
+                <th>{% trans "Ir" %}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for cita in citas.all %}
+              <tr>
+                  <td>{{ forloop.counter}}</td>
+                  <td>{{ cita.creation_date}}</td>
+                  <td>{{ cita.comment}}</td>
+                  <td>{{ cita.text}}</td>
+                  <td><a class="btn btn-small btn-block btn-primary pull-right left-group-button menu-document-button" onclick="$('#citationsModal').modal('hide');buscarCita('{{cita.text}}');"><i class="icon-arrow-right icon-white"></i>  Ver</a></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="alert alert-info">
+            <h4>{% trans "¡No hay citas!" %}</h4>
+            <p>{% trans "No hay citas en el documento. " %}<strong></strong>.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

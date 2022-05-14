@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block head %}
+  {{ block.super }}
+{% endblock head %}
+
+{% block topbar_extra %}
+{% endblock topbar_extra %}
+
+{% block body %}
+  <div class="row-fluid viewProjects">
+
+    <div class="span3 offset1 containerProjects">
+
+      <h3 class="tittle">PROYECTOS</h3>
+      <hr></hr>
+
+      {% if allProjects %}
+        <div class="accordion white-background" id="accordion">
+          {% for project in allProjects %}
+            <div class="accordion-group">
+              <div class="accordion-heading">
+                <a class="accordion-toggle acordion-project-name" data-parent="#accordion" href="/project/{{project.id}}">
+                  {{ project.name}}
+                </a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="alert alert-info">
+          <h4>¡No hay proyectos!</h4>
+          <p>No hay proyectos asignados a este usuario. Puede <strong><a href="/project/new">agregar uno</a></strong>.</p>
+        </div>
+      {% endif %}
+
+
+    </div>
+
+    <div class="span7 formNewProject">
+      {% include "form.html" with form=project_form form_action=form_action back_url=back_url%}
+    </div>
+  </div>
+{% endblock %}

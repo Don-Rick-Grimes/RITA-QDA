@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block head %}
+  {{ block.super }}
+{% endblock head %}
+
+{% block topbar_extra %}
+{% endblock topbar_extra %}
+
+{% load filters %}
+
+{% block body %}
+  <div class="modal hide fade" id="userModal">
+  </div>
+  
+  <div class="row-fluid viewProjects">
+
+    <div class="span3 offset1 containerProjects" >
+
+      <h3 class="tittle">PROYECTOS</h3>
+      <hr></hr>
+      
+      {% if projects %}
+        <div class="accordion white-background" id="accordion">
+          {% for project in projects %}
+            <div class="accordion-group">
+              <div class="accordion-heading">
+                <a class="accordion-toggle acordion-project-name" data-parent="#accordion" href="/project/{{project.id}}">
+                  {{ project.name}}
+                </a>
+              </div>
+              
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="alert alert-info">
+          <h4>¡No hay proyectos!</h4>
+          <p>No hay proyectos asignados a este usuario. Puede <strong><a href="/project/new">agregar uno</a></strong>.</p>
+        </div>
+      {% endif %}
+
+      <div class="toolbar">
+        <a class="btn btn-success pull-right" href="/project/new"><i class="icon-plus icon-white"></i>  Nuevo proyecto</a>
+      </div>
+    </div>
+
+    <div class="span7 detailProject">
+      <img src="{{ STATIC_URL }}imgs/logo.png" alt="RITAQDA" title="RITAQDA">
+    </div>
+
+
+  </div>
+{% endblock %}

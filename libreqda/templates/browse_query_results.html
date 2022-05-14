@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+{% load filters %}
+
+{% block head %}
+  {{ block.super }}
+{% endblock head %}
+
+{% block topbar_extra %}
+{% endblock topbar_extra %}
+
+{% block body %}
+  <div class="row-fluid">
+    <div class="span10 offset1">
+      {% if results %}
+        <div class="accordion white-background" id="accordion">
+          {% for code in results %}
+            <div class="accordion-group">
+              <div class="accordion-heading">
+                <a class="accordion-toggle acordion-project-name" data-toggle="collapse" href="#collapse{{code.id}}">
+                  {{ code.name }}
+                </a>
+              </div>
+              <div id="collapse{{code.id}}" class="accordion-body in collapse">
+                <div class="accordion-inner">
+                  <table class="table table-condensed table-striped table-hover">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>{% trans "Códigos" %}</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                    {% for citation in code.citations %}
+                      <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                          {% for code in citation.codes.all %}
+                            {{ code|pretty_print_code_name|safe }}
+                          {% endfor %}
+                        </td>
+                        <td>
+                          <span>{{citation.document.name}}</span>
+                          <a class="btn btn-small btn-primary pull-right" href="/project/{{project.id}}/document/{{citation.document.id}}/#{{citation.text}}"><i class="icon-eye-open icon-white"></i> {% trans "Ver en documento" %}</a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td colspan="3">
+                          {{ citation.text }}
+                        </td>
+                      </tr>
+                    {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="alert">
+          {% trans "No hubo resultados para la consulta." %} <strong><a href="{% url browse_queries pid=project.id %}">{% trans "Volver" %}</a></strong>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

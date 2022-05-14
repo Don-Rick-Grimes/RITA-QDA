@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block head %}
+  {{ block.super }}
+{% endblock head %}
+
+{% block topbar_extra %}
+{% endblock topbar_extra %}
+
+{% block body %}
+  <div class="row-fluid">
+    <div class="span10 offset1">
+      {% include "form.html" with form=form form_action=form_action back_url=back_url %}
+    </div>
+  </div>
+  <td>
+    {% if code.parent_codes.all %}
+      {% for parent in code.parent_codes.all %}
+        {% if forloop.last %}
+          <script type="text/javascript">
+            $("#id_parent_codes option[value={{ parent.id|safe }}]").prop("selected", true);
+          </script>
+        {% else %}
+          <script type="text/javascript">
+            $("#id_parent_codes option[value={{ parent.id|safe }}]").prop("selected", true);
+          </script>
+        {% endif %}
+      {% endfor %}
+    {% else %}
+    -
+    {% endif %}
+  </td>
+  <script type="text/javascript">
+  	url=window.location.href;
+  	if(url.search("edit")>0){
+  		$("#id_name").val("{{code.name}}");
+  		$("#id_weight").val("{{code.weight}}");
+  		$("#id_color").val("{{code.color}}");
+  		$("#id_comment").val("{{code.comment}}");
+  	}
+  </script>
+{% endblock %}

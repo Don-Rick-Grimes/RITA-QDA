@@ -1,0 +1,45 @@
+{% load i18n %}
+<div class="toolbar-small">
+  <a class="btn btn-small btn-success pull-right" href="/project/{{project.id}}/images/add"><i class="icon-file icon-white"></i> Agregar imagen</a>
+</div>
+{% if project.images.all %}
+  <table class="table table-condensed table-striped table-hover">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>{% trans "Nombre" %}</th>
+        <th>{% trans "Tipo" %}</th>
+        <th>{% trans "Fecha" %}</th>
+        <th>{% trans "Añadido por" %}</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for doc in project.images.all reversed%}
+        <tr>
+          <td>{{ forloop.counter }}</td>
+          <td>{{ doc.name }}</td>
+          <td>{{ doc.type }}</td>
+          <td>{{ doc.creation_date }}</td>
+          <td>{{ doc.uploaded_by }}</td>
+          <td>
+            <a class="btn btn-small btn-primary pull-right left-group-button" href="{% url view_image pid=project.id did=doc.id %}"><i class="icon-eye-open icon-white"></i> {% trans "Ver" %}</a>
+            <a class="btn btn-small btn-danger pull-right" href="{% url delete_image pid=project.id did=doc.id %}"><i class="icon-trash icon-white"></i>  {% trans "Eliminar" %}</a>
+          </td>
+        </tr>
+        <tr>
+          <td></td>
+          {% if doc.comment %}
+            <td colspan="5">{{ doc.comment|linebreaks }}</td>
+          {% else %}
+            <td colspan="5">{% trans "La imagen no tiene descripción." %}</td>
+          {% endif %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <div class="alert alert-info">
+    <strong>¡{% trans "No hay imágenes!" %}</strong>
+  </div>
+{% endif %}

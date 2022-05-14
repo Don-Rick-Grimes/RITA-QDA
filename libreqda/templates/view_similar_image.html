@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block topbar_extra %}
+{% endblock topbar_extra %}
+
+{% block body %}
+<div class="container">
+    <h2>Imágenes Similares</h2>
+{%if images%}
+        <div class="row">
+        {% for image in images %}
+                <div class="span4" data-did="{{image.id_image.image.id}}">
+                    <h4>{{ image.id_image.name }}</h4>
+                    <p><img src = "/{{image.id_image.image.file.url}}" style="height: 200px"/></p>
+                    <div>
+                        <p><h6>Propietario: {{image.id_image.project.owner}}</h6></p>
+                        <p><h6>Nombre del proyecto: {{image.id_image.project.name}}</h6></p>
+                    </div>
+                    <p><a id="{{image.id_image.image.id}}" class="btn btn-success" href="javascript:add_image_project({{image.id_image.image.id}})"><i class="icon-plus-sign icon-white"></i> Añadir al proyecto</a></p>
+                </div>
+        {% endfor %}
+        </div>
+</div>
+<!-- paginacion -->
+<div class="row">
+    <div class="span4"></div>
+    <div class="span6">
+        <div class="pagination">
+            <ul>
+                {% if images.has_previous %}
+                <li><a href="?page={{images.previous_page_number}}">Prev</a></li>
+                {% else %}
+                <li><a>Prev</a></li>
+                {% endif %}
+                {% for page in page_range  %}
+                {%if page == request.GET.page %}
+                <li><a class="disabled" style="color: red">{{page}}</a></li>
+                {% else %}
+                <li><a href="?page={{page}}">{{page}}</a></li>
+                {% endif %}
+                {% endfor %}
+                {% if images.has_next %}
+                <li><a href="?page={{images.next_page_number}}">Next</a></li>
+                {% else %}
+                <li><a>Next</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-info">
+    <h4>¡No hay imágenes similares!</h4>
+</div>
+{% endif %}
+<div class="container">
+    <a class="btn btn-primary" href="{% url view_image pid did %}"><i class="icon-arrow-left icon-white"></i> Regresar</a>
+</div>
+<script>
+
+function add_image_project(id)
+{
+    selector = '#' + id;
+    $(selector).attr('class','btn btn-success disabled');
+    $.post('{% url add_share_image pid=pid did=did %}', {'csrfmiddlewaretoken':'{{csrf_token}}', 'id':id}, "json");
+}
+</script>
+{% endblock %}

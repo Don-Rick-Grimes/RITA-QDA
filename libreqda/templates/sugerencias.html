@@ -1,0 +1,4 @@
+<form enctype="multipart/form-data"  action="{% url sugerencia pid=project.id did=image.id %}" method="post" class="cobertura">
+    {%csrf_token%}
+    <button type="submit" class="btn btn-primary left-group-button"><i class="icon-ok icon-white"></i> Confirmar</button>
+</form>
